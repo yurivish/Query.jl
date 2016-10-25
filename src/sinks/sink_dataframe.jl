@@ -1,5 +1,32 @@
 @require DataFrames begin
 
+function DataFrames.DataFrame{T}(source::Enumerable{T})
+    return collect(source, DataFrames.DataFrame)
+end
+
+DataFrames.ModelFrame{T}(f::DataFrames.Formula, d::Enumerable{T}; kwargs...) = DataFrames.ModelFrame(f, DataFrames.DataFrame(d); kwargs...)
+
+function StatsBase.fit{T<:StatsBase.StatisticalModel}(::Type{T}, f::DataFrames.Formula, source::Enumerable, args...; contrasts::Dict = Dict(), kwargs...)
+    mf = DataFrames.ModelFrame(f, source, contrasts=contrasts)
+    mm = DataFrames.ModelMatrix(mf)
+    y = model_response(mf)
+    DataFrames.DataFrameStatisticalModel(fit(T, mm.m, y, args...; kwargs...), mf, mm)
+end
+
+function StatsBase.fit{T<:StatsBase.RegressionModel}(::Type{T}, f::DataFrames.Formula, source::Enumerable, args...; contrasts::Dict = Dict(), kwargs...)
+    mf = DataFrames.ModelFrame(f, source, contrasts=contrasts)
+    mm = DataFrames.ModelMatrix(mf)
+    y = model_response(mf)
+    DataFrames.DataFrameRegressionModel(fit(T, mm.m, y, args...; kwargs...), mf, mm)
+end
+
+function StatsBase.fit{T<:StatsBase.RegressionModel,GTKey,GT<:NamedTuple}(::Type{T}, f::DataFrames.Formula, source::Grouping{GTKey,GT}, args...; contrasts::Dict = Dict(), kwargs...)
+    mf = DataFrames.ModelFrame(f, Query.query(source), contrasts=contrasts)
+    mm = DataFrames.ModelMatrix(mf)
+    y = model_response(mf)
+    DataFrames.DataFrameRegressionModel(fit(T, mm.m, y, args...; kwargs...), mf, mm)
+end
+
 @generated function _filldf(columns, enumerable)
     n = length(columns.types)
     push_exprs = Expr(:block)
