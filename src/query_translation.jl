@@ -140,11 +140,15 @@ function query_expression_translation_phase_4(qe)
 			y = qe[2].args[2].args[1]
 			f = qe[2].args[2].args[2]
 
-			f_selector = Expr(:->, x, :(@NT($x=>$x,$y=>$f)))
+			y_without_type = isa(y, Symbol) ? y : y.args[1]
 
-			qe[1].args[2].args[2] = Expr(:transparentidentifier, gensym(:t), x, y)
+			f_selector = Expr(:->, x, :(@NT($x,$y)($x,$f)))
+
+
+			qe[1].args[2].args[2] = Expr(:transparentidentifier, gensym(:t), x, y_without_type)
 			qe[1].args[2].args[3] = :( Query.@select_internal($e,$(esc(f_selector))) )
 			deleteat!(qe,2)
+			println("OK")
 		elseif length(qe)>=3 && qe[1].head==:macrocall && qe[1].args[1]==Symbol("@from") && qe[2].head==:macrocall && qe[2].args[1]==Symbol("@where")
 			x = qe[1].args[2].args[2]
 			e = qe[1].args[2].args[3]
