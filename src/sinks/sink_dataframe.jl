@@ -1,10 +1,10 @@
 @require DataFrames begin
 
-function DataFrames.DataFrame{T}(source::Enumerable{T})
+function DataFrames.DataFrame(source::Enumerable)
     return collect(source, DataFrames.DataFrame)
 end
 
-DataFrames.ModelFrame{T}(f::DataFrames.Formula, d::Enumerable{T}; kwargs...) = DataFrames.ModelFrame(f, DataFrames.DataFrame(d); kwargs...)
+DataFrames.ModelFrame(f::DataFrames.Formula, d::Enumerable; kwargs...) = DataFrames.ModelFrame(f, DataFrames.DataFrame(d); kwargs...)
 
 function StatsBase.fit{T<:StatsBase.StatisticalModel}(::Type{T}, f::DataFrames.Formula, source::Enumerable, args...; contrasts::Dict = Dict(), kwargs...)
     mf = DataFrames.ModelFrame(f, source, contrasts=contrasts)
